@@ -8,6 +8,7 @@
 #define STDEX_OFFSET_LIST_HPP_INCLUDED
 
 #include <memory>
+#include <functional>
 #include <type_traits>
 #include <initializer_list>
 #include <boost/iterator/iterator_facade.hpp>
