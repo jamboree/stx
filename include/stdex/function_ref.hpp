@@ -38,13 +38,13 @@ namespace stdex
     public:
 
         template<class F, enable_other_callable<F> = true>
-        function_ref(F&& f)
+        function_ref(F&& f) noexcept
           : _p(reinterpret_cast<std::uintptr_t>(&f))
           , _f(invoke<std::remove_reference_t<F>>)
         {}
 
         template<class F, std::enable_if_t<is_callable<F>::value, bool> = true>
-        function_ref(F* f)
+        function_ref(F* f) noexcept
           : _p(reinterpret_cast<std::uintptr_t>(f)), _f(invoke<F>)
         {}
 
