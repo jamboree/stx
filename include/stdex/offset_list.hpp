@@ -194,6 +194,7 @@ namespace stdex
             destroy(begin(), end());
         }
 
+        /// \exception-safety basic
         offset_list& operator=(offset_list const& other)
         {
             if (alloc_traits::propagate_on_container_copy_assignment::value)
@@ -208,17 +209,18 @@ namespace stdex
             return *this;
         }
 
-        offset_list& operator=(offset_list&& other)
+        offset_list& operator=(offset_list&& other) noexcept(
+            alloc_traits::propagate_on_container_move_assignment::value)
         {
             if (!alloc_traits::propagate_on_container_move_assignment::value)
             {
                 if (alloc_base() != other.alloc_base())
                 {
                     assign
-                      (
+                    (
                         std::make_move_iterator(other.begin())
-                        , std::make_move_iterator(other.end())
-                      );
+                      , std::make_move_iterator(other.end())
+                    );
                     return *this;
                 }
             }
@@ -226,6 +228,7 @@ namespace stdex
             return *new(this) offset_list(std::move(other), other.alloc_base());
         }
 
+        /// \exception-safety basic
         offset_list& operator=(std::initializer_list<T> ilist)
         {
             assign(ilist);
@@ -281,7 +284,7 @@ namespace stdex
             assign(ilist.begin(), ilist.end());
         }
 
-        allocator_type get_allocator() const
+        allocator_type get_allocator() const noexcept
         {
             return static_cast<allocator_type const&>(*this);
         }
