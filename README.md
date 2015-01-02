@@ -11,6 +11,9 @@ lib for c++14 and forward
 
 - __offset_list__: STL-like relocatable [subtraction linked list](http://en.wikipedia.org/wiki/XOR_linked_list#Subtraction_linked_list)
 - __function_ref__: non-allocating synchronous function callback
+- __is_iterator__: iterator traits
+- __priority__: priority-based tag-dispatching utility
+- __reconstruct__: object reconstruction utility
 
 ## License
 

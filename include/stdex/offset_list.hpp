@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <initializer_list>
 #include <boost/iterator/iterator_facade.hpp>
 #include <stdex/is_iterator.hpp>
 
@@ -174,7 +175,7 @@ namespace stdex
         {}
 
         offset_list(offset_list&& other, Allocator const& alloc) noexcept
-          : Allocator(alloc)
+          : node_alloc(alloc)
         {
             if (other._head)
                 steal(other);
