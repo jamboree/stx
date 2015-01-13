@@ -17,6 +17,7 @@ lib for c++14 and forward
 - __reconstruct__: object reconstruction utility
 - __find__: `find` and `contains` algorithms
 - __binary_search__: binary_search that returns an iterator
+- __overload__: overload callable objects
 
 ## License
 
