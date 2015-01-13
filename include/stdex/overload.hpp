@@ -24,9 +24,16 @@ namespace stdex { namespace overload_detail
         using F::operator();
         using composite<Fs...>::operator();
 
-        composite(F&& f, Fs&&... fs)
+        template<class... F2>
+        composite(F const& f, F2&&... fs)
+          : F(f)
+          , composite<Fs...>(std::forward<F2>(fs)...)
+        {}
+
+        template<class... F2>
+        composite(F&& f, F2&&... fs)
           : F(std::move(f))
-          , composite<Fs...>(std::move(fs)...)
+          , composite<Fs...>(std::forward<F2>(fs)...)
         {}
     };
 
@@ -38,9 +45,10 @@ namespace stdex { namespace overload_detail
             return _f;
         }
 
-        composite(F* f, Fs&&... fs)
+        template<class... F2>
+        composite(F* f, F2&&... fs)
           : _f(f)
-          , composite<Fs...>(std::move(fs)...)
+          , composite<Fs...>(std::forward<F2>(fs)...)
         {}
 
     private:
