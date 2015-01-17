@@ -9,10 +9,10 @@
 
 #include <type_traits>
 
-#if defined(STDEX_HAS_STD_COROUTINE)
-#include <coroutine>
-#else
-#include <experimental/resumable>
+#   if defined(STDEX_HAS_STD_COROUTINE)
+#   include <coroutine>
+#   else
+#   include <experimental/resumable>
 
 namespace std
 {
@@ -24,8 +24,8 @@ namespace std
     using experimental::suspend_if;
 }
 
-#define await __await
-#endif
+#   define await __await
+#   endif
 
 namespace stdex { namespace task_detail
 {
@@ -146,8 +146,10 @@ namespace stdex { namespace task_detail
 namespace stdex
 {
     template<class T>
-    struct task
+    class task
     {
+    public:
+
         struct promise_type : task_detail::promise_data<T>
         {
             task get_return_object()
@@ -229,13 +231,13 @@ namespace stdex
     template<class F>
     using await_result_t = decltype(task_detail::await_result_test(std::declval<F>()));
 
-#if defined(STDEX_HAS_STD_COROUTINE)
+#   if defined(STDEX_HAS_STD_COROUTINE)
     template<class F, class R = >
     inline task<await_result_t<F>> spawn(F&& f)
     {
         return await f;
     }
-#else
+#   else
     template<class F, class R = await_result_t<F>>
     inline std::enable_if_t<std::is_void<R>::value, task<R>> spawn(F&& f)
     {
@@ -247,7 +249,7 @@ namespace stdex
     {
         return await f;
     }
-#endif
+#   endif
 }
 
 #endif
