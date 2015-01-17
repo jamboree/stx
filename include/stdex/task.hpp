@@ -54,7 +54,7 @@ namespace stdex { namespace task_detail
 
         std::coroutine_handle<> _then;
 
-        void continuation()
+        void notify()
         {
             if (_then)
                 _then();
@@ -71,14 +71,14 @@ namespace stdex { namespace task_detail
         {
             new(&_val) val_t(std::forward<U>(u));
             _tag = tag::value;
-            continuation();
+            notify();
         }
 
-        void set_exception(std::exception_ptr e)
+        void set_exception(std::exception_ptr const& e)
         {
-            new (&e) std::exception_ptr(std::move(e));
+            new(&_e) std::exception_ptr(e);
             _tag = tag::exception;
-            continuation();
+            notify();
         }
 
     protected:
@@ -117,14 +117,14 @@ namespace stdex { namespace task_detail
         void set_result()
         {
             _tag = tag::value;
-            continuation();
+            notify();
         }
 
-        void set_exception(std::exception_ptr e)
+        void set_exception(std::exception_ptr const& e)
         {
-            e = std::move(e);
+            _e = e;
             _tag = tag::exception;
-            continuation();
+            notify();
         }
 
     protected:
@@ -159,7 +159,7 @@ namespace stdex
 
             std::suspend_never initial_suspend()
             {
-                return{};
+                return {};
             }
 
             auto final_suspend()
