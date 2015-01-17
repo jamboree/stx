@@ -18,6 +18,7 @@ lib for c++14 and forward
 - __find__: `find` and `contains` algorithms
 - __binary_search__: binary_search that returns an iterator
 - __overload__: overload callable objects
+- __task__: awaitable task based on [N4286](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4286.pdf)
 
 ## License
 
