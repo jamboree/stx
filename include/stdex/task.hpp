@@ -189,25 +189,25 @@ namespace stdex
             }
         };
 
-        explicit task(promise_type& p) : _p(&p) {}
+        explicit task(promise_type& p) noexcept : _p(&p) {}
 
-        task(task&& other) : _p(other._p)
+        task(task&& other) noexcept : _p(other._p)
         {
             other._p = nullptr;
         }
 
-        task& operator=(task&& other)
+        task& operator=(task&& other) noexcept
         {
             ~task();
             return *new(this) task(std::move(other));
         }
 
-        bool await_ready() const
+        bool await_ready() const noexcept
         {
             return _p->_tag != task_detail::tag::null;
         }
 
-        void await_suspend(std::coroutine_handle<> cb)
+        void await_suspend(std::coroutine_handle<> cb) noexcept
         {
             _p->_then = cb;
         }
