@@ -7,25 +7,9 @@
 #ifndef STDEX_TASK_HPP_INCLUDED
 #define STDEX_TASK_HPP_INCLUDED
 
+#include <functional>
 #include <type_traits>
-
-#   if defined(STDEX_HAS_STD_COROUTINE)
-#   include <coroutine>
-#   else
-#   include <experimental/resumable>
-
-namespace std
-{
-    template<class Promise = void>
-    using coroutine_handle = experimental::resumable_handle<Promise>;
-
-    using experimental::suspend_never;
-    using experimental::suspend_always;
-    using experimental::suspend_if;
-}
-
-#   define await __await
-#   endif
+#include <stdex/coroutine.hpp>
 
 namespace stdex { namespace task_detail
 {
@@ -52,7 +36,7 @@ namespace stdex { namespace task_detail
     {
     protected:
 
-        std::coroutine_handle<> _then;
+        stdex::coroutine_handle<> _then;
 
         void notify()
         {
@@ -157,14 +141,14 @@ namespace stdex
                 return task(*this);
             }
 
-            std::suspend_never initial_suspend()
+            suspend_never initial_suspend()
             {
                 return {};
             }
 
             auto final_suspend()
             {
-                return std::suspend_if(transfer_ownership());
+                return suspend_if(transfer_ownership());
             }
 
             bool cancellation_requested() const
@@ -207,7 +191,7 @@ namespace stdex
             return _p->_tag != task_detail::tag::null;
         }
 
-        void await_suspend(std::coroutine_handle<> cb) noexcept
+        void await_suspend(stdex::coroutine_handle<> cb) noexcept
         {
             _p->_then = cb;
         }
@@ -220,7 +204,7 @@ namespace stdex
         ~task()
         {
             if (_p && !_p->transfer_ownership())
-                std::coroutine_handle<promise_type>::from_promise(_p)();
+                stdex::coroutine_handle<promise_type>::from_promise(_p)();
         }
 
     private:
