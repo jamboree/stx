@@ -54,13 +54,19 @@ namespace stdex { namespace act
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket)
     {
-        ACT_RETURN_FREE_AWAITER(void, acceptor, accept, std::ref(socket));
+        return make_awaiter<void>([&](auto&& cb)
+        {
+            acceptor.async_accept(socket, cb);
+        });
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint)
     {
-        ACT_RETURN_FREE_AWAITER(void, acceptor, accept, std::ref(socket), std::ref(endpoint));
+        return make_awaiter<void>([&](auto&& cb)
+        {
+            acceptor.async_accept(socket, endpoint, cb);
+        });
     }
 }}
 

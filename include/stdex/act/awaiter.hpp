@@ -12,7 +12,7 @@
 #include <stdex/coroutine.hpp>
 #include <boost/system/system_error.hpp>
 
-namespace stdex { namespace act_detail
+namespace stdex { namespace act { namespace detail
 {
     template<class T>
     inline T const& unwrap(T const& val)
@@ -25,7 +25,7 @@ namespace stdex { namespace act_detail
     {
         return val;
     }
-}}
+}}}
 
 namespace stdex { namespace act
 {
@@ -92,19 +92,19 @@ namespace stdex { namespace act
         return{ std::forward<F>(f) };
     }
 
-#define ACT_RETURN_AWAITER(R, obj, op, ...)             \
-    return make_awaiter<R>([&obj, =](auto&& cb)         \
-    {                                                   \
-        obj.async_##op(__VA_ARGS__, cb);                \
+#define ACT_RETURN_AWAITER(R, obj, op, ...)                                     \
+    return make_awaiter<R>([=, &obj](auto&& cb)                                 \
+    {                                                                           \
+        obj.async_##op(__VA_ARGS__, cb);                                        \
     })
 
-#define ACT_RETURN_FREE_AWAITER(R, obj, op, ...)                            \
-    return [&obj](auto&&... args)                                           \
-    {                                                                       \
-        return make_awaiter<R>([&obj, =](auto&& cb)                         \
-        {                                                                   \
-            ::boost::asio::async_##op(obj, act_detail::unwrap(args)..., cb);\
-        });                                                                 \
+#define ACT_RETURN_FREE_AWAITER(R, obj, op, ...)                                \
+    return [&obj](auto&&... args)                                               \
+    {                                                                           \
+        return act::make_awaiter<R>([=, &obj](auto&& cb)                        \
+        {                                                                       \
+            ::boost::asio::async_##op(obj, act::detail::unwrap(args)..., cb);   \
+        });                                                                     \
     }(__VA_ARGS__)
 }}
 
