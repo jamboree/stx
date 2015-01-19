@@ -10,6 +10,7 @@
 #include <functional>
 #include <type_traits>
 #include <stdex/coroutine.hpp>
+#include <boost/assert.hpp>
 
 namespace stdex { namespace task_detail
 {
@@ -186,6 +187,11 @@ namespace stdex
             return *new(this) task(std::move(other));
         }
 
+        bool valid() const noexcept
+        {
+            return _p;
+        }
+
         bool await_ready() const noexcept
         {
             return _p->_tag != task_detail::tag::null;
@@ -193,6 +199,7 @@ namespace stdex
 
         void await_suspend(stdex::coroutine_handle<> cb) noexcept
         {
+            BOOST_ASSERT_MSG(!_p->_then, "multiple coroutines await on same task");
             _p->_then = cb;
         }
 
