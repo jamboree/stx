@@ -8,9 +8,24 @@
 #define STDEX_COROUTINE_HPP_INCLUDED
 
 #   if defined(STDEX_HAS_STD_COROUTINE)
+
 #   include <coroutine>
+
+namespace stdex
+{
+    using std::coroutine_handle;
+    using std::suspend_never;
+    using std::suspend_always;
+    using std::suspend_if;
+}
+
 #   else
+
 #   include <experimental/resumable>
+
+#       ifndef await
+#       define await __await
+#       endif
 
 namespace stdex
 {
@@ -20,11 +35,20 @@ namespace stdex
     using std::experimental::suspend_never;
     using std::experimental::suspend_always;
     using std::experimental::suspend_if;
+}
 
+#   endif
+
+namespace stdex
+{
     struct detached_task
     {
-        struct promise_data
+        struct promise_type
         {
+            detached_task get_return_object()
+            {
+                return {};
+            }
 
             suspend_never initial_suspend()
             {
@@ -45,6 +69,8 @@ namespace stdex
 
             void set_exception(std::exception_ptr const& e) {}
         };
+
+        detached_task() {}
     };
 }
 
@@ -85,8 +111,5 @@ namespace stdex
         return ret;
     }
 }
-
-#   define await __await
-#   endif
 
 #endif

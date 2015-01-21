@@ -223,12 +223,15 @@ namespace stdex
     using await_result_t = decltype(task_detail::await_result_test(std::declval<F>()));
 
 #   if defined(STDEX_HAS_STD_COROUTINE)
+
     template<class F>
     inline task<await_result_t<F>> spawn(F&& f)
     {
         return await f;
     }
+
 #   else
+
     template<class F, class R = await_result_t<F>>
     inline std::enable_if_t<std::is_void<R>::value, task<R>> spawn(F&& f)
     {
@@ -240,6 +243,7 @@ namespace stdex
     {
         return await f;
     }
+
 #   endif
 }
 
