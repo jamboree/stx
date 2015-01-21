@@ -20,6 +20,70 @@ namespace stdex
     using std::experimental::suspend_never;
     using std::experimental::suspend_always;
     using std::experimental::suspend_if;
+
+    struct detached_task
+    {
+        struct promise_data
+        {
+
+            suspend_never initial_suspend()
+            {
+                return {};
+            }
+
+            suspend_never final_suspend()
+            {
+                return {};
+            }
+
+            bool cancellation_requested() const
+            {
+                return false;
+            }
+
+            void set_result() {}
+
+            void set_exception(std::exception_ptr const& e) {}
+        };
+    };
+}
+
+namespace stdex { namespace coroutine_detail
+{
+    struct yield_to
+    {
+        coroutine_handle<>& coro;
+
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+
+        void await_suspend(coroutine_handle<> cb) noexcept
+        {
+            coro = cb;
+        }
+
+        void await_resume() {}
+    };
+
+    template<class F>
+    inline detached_task create_coroutine(coroutine_handle<>& coro, F&& f)
+    {
+        await yield_to{coro};
+        f();
+    }
+}}
+
+namespace stdex
+{
+    template<class F>
+    inline coroutine_handle<> make_coroutine_handle(F&& f)
+    {
+        coroutine_handle<> ret;
+        coroutine_detail::create_coroutine(ret, std::forward<F>(f));
+        return ret;
+    }
 }
 
 #   define await __await
