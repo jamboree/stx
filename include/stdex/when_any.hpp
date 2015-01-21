@@ -121,7 +121,10 @@ namespace stdex
     task<It> when_any(It begin, It end)
     {
         task_detail::callback_hook<It> cb;
-        for (It it(begin); it != end; ++it)
+        if (begin == end)
+            return end;
+        It it(begin);
+        do
         {
             if (it->await_ready())
             {
@@ -129,15 +132,16 @@ namespace stdex
                 return it;
             }
             task_detail::hook(it, cb);
-        }
-        It it(await cb), next(it);
+        } while (++it != end);
+        it = await cb;
+        It next(it);
         task_detail::unhook(begin, it);
         task_detail::unhook(++next, end);
         return it;
     }
 
     template<class... T>
-    task<unsigned> when_any(task<T>&... t)
+    std::enable_if_t<sizeof...(T), task<unsigned>> when_any(task<T>&... t)
     {
         task_detail::callback_hook<unsigned> cb;
         if (unsigned n = task_detail::recursive_hook(1, cb, t...))
