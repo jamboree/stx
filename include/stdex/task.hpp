@@ -14,6 +14,51 @@
 
 namespace stdex { namespace task_detail
 {
+    struct harness
+    {
+        struct promise_type
+        {
+            bool canceling = false;
+
+            void cancel()
+            {
+                canceling = true;
+            }
+
+            harness get_return_object()
+            {
+                return{};
+            }
+
+            suspend_never initial_suspend()
+            {
+                return{};
+            }
+
+            suspend_never final_suspend()
+            {
+                return{};
+            }
+
+            bool cancellation_requested() const
+            {
+                return canceling;
+            }
+
+            void set_result() {}
+
+            void set_exception(std::exception_ptr const& e) {}
+        };
+
+        harness() {}
+
+        template<class Task>
+        static void drop(Task& task)
+        {
+            task.template abort_from<harness>();
+        }
+    };
+
     template<class T>
     struct wrap_reference
     {
@@ -37,7 +82,7 @@ namespace stdex { namespace task_detail
     {
     protected:
 
-        stdex::coroutine_handle<> _then;
+        coroutine_handle<> _then;
 
         void notify()
         {
@@ -197,7 +242,7 @@ namespace stdex
             return _p->_tag != task_detail::tag::null;
         }
 
-        void await_suspend(stdex::coroutine_handle<> cb) noexcept
+        void await_suspend(coroutine_handle<> cb) noexcept
         {
             BOOST_ASSERT_MSG(!_p->_then, "multiple coroutines await on same task");
             _p->_then = cb;
@@ -211,10 +256,22 @@ namespace stdex
         ~task()
         {
             if (_p && !_p->transfer_ownership())
-                stdex::coroutine_handle<promise_type>::from_promise(_p)();
+                coroutine_handle<promise_type>::from_promise(_p)();
         }
 
     private:
+
+        friend struct task_detail::harness;
+
+        template<class Coroutine>
+        void abort_from()
+        {
+            using Promise = typename Coroutine::promise_type;
+            auto& then = static_cast<coroutine_handle<Promise>&>(_p->_then);
+            then.promise().cancel();
+            then();
+            then = nullptr;
+        }
 
         promise_type* _p;
     };

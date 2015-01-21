@@ -7,7 +7,7 @@
 #ifndef STDEX_WHEN_ANY_HPP_INCLUDED
 #define STDEX_WHEN_ANY_HPP_INCLUDED
 
-#include <memory>
+#include <iterator>
 #include <stdex/task.hpp>
 
 namespace stdex { namespace task_detail
@@ -17,11 +17,6 @@ namespace stdex { namespace task_detail
     {
         coroutine_handle<> coro;
         T result;
-
-        explicit operator bool() const
-        {
-            return coro;
-        }
 
         void operator()(T val)
         {
@@ -63,13 +58,52 @@ namespace stdex { namespace task_detail
     };
 
     template<class It, class Callback>
-    detached_task hook(It it, std::shared_ptr<Callback> cp)
+    inline harness hook(It it, Callback& cb)
     {
         await *it;
-        if (auto& callback = *cp)
-        {
-            callback(it);
-        }
+        cb(it);
+    }
+
+    template<class It>
+    inline void unhook(It it, It end)
+    {
+        for ( ; it != end; ++it)
+            harness::drop(*it);
+    }
+
+    template<class Callback, class T>
+    inline unsigned recursive_hook(unsigned i, Callback& cb, task<T>& t)
+    {
+        if (t.await_ready())
+            return i;
+        hook(indexed_ptr<task<T>>{i, &t}, cb);
+        return 0;
+    }
+
+    template<class Callback, class T, class... Ts>
+    inline unsigned recursive_hook(unsigned i, Callback& cb, task<T>& t, task<Ts>&... ts)
+    {
+        if (t.await_ready())
+            return i;
+        if (unsigned n = recursive_hook(++i, cb, ts...))
+            return n;
+        hook(indexed_ptr<task<T>>{i, &t}, cb);
+        return 0;
+    }
+
+    template<class T>
+    inline void recursive_unhook(unsigned i, unsigned n, task<T>& t)
+    {
+        if (i != n)
+            harness::drop(t);
+    }
+
+    template<class T, class... Ts>
+    inline void recursive_unhook(unsigned i, unsigned n, task<T>& t, task<Ts>&... ts)
+    {
+        if (i != n)
+            harness::drop(t);
+        recursive_unhook(++i, n, ts...);
     }
 }}
 
@@ -86,26 +120,31 @@ namespace stdex
     template<class It>
     task<It> when_any(It begin, It end)
     {
-        auto cp = std::make_shared<callback_hook<It>>();
-        for ( ; begin != end; ++begin)
+        task_detail::callback_hook<It> cb;
+        for (It it(begin); it != end; ++it)
         {
-            if (begin->await_ready())
-                return begin;
-            hook(begin, cp);
+            if (it->await_ready())
+            {
+                task_detail::unhook(begin, it);
+                return it;
+            }
+            task_detail::hook(it, cb);
         }
-        return await *cp;
+        It it(await cb), next(it);
+        task_detail::unhook(begin, it);
+        task_detail::unhook(++next, end);
+        return it;
     }
 
     template<class... T>
     task<unsigned> when_any(task<T>&... t)
     {
-        auto cp = std::make_shared<callback_hook<unsigned>>();
-        unsigned i = 0;
-        std::initializer_list<bool>
-        {
-            (hook(indexed_ptr<task<T>>{i++, &t}, cp), true)...
-        };
-        return await *cp;
+        task_detail::callback_hook<unsigned> cb;
+        if (unsigned n = task_detail::recursive_hook(1, cb, t...))
+            return --n;
+        unsigned n = await cb;
+        task_detail::recursive_unhook(1, n, t...);
+        return --n;
     }
 }
 

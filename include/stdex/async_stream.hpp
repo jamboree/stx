@@ -65,7 +65,7 @@ namespace stdex { namespace async_stream_detail
             return _token = !_token;
         }
 
-        stdex::coroutine_handle<> _then;
+        coroutine_handle<> _then;
         union
         {
             void const* _ptr;
@@ -151,11 +151,11 @@ namespace stdex
         {
             using async_stream_detail::tag;
             if (_p->_tag == tag::begin)
-                stdex::coroutine_handle<promise_type>::from_promise(_p)();
+                coroutine_handle<promise_type>::from_promise(_p)();
             return _p->_tag != tag::null;
         }
 
-        void await_suspend(stdex::coroutine_handle<> cb) noexcept
+        void await_suspend(coroutine_handle<> cb) noexcept
         {
             BOOST_ASSERT_MSG(!_p->_then, "multiple coroutines await on same async_stream");
             _p->_then = cb;
@@ -172,7 +172,7 @@ namespace stdex
             {
                 _p->_canceling = true;
                 if (!_p->transfer_ownership())
-                    stdex::coroutine_handle<promise_type>::from_promise(_p)();
+                    coroutine_handle<promise_type>::from_promise(_p)();
             }
         }
 
