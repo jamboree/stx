@@ -199,16 +199,8 @@ namespace stdex
 
         void await_suspend(stdex::coroutine_handle<> cb) noexcept
         {
-            if (auto& then = _p->_then)
-            {
-                then = make_coroutine_handle([prev=then, curr=cb]
-                {
-                    prev();
-                    curr();
-                });
-            }
-            else
-                then = cb;
+            BOOST_ASSERT_MSG(!_p->_then, "multiple coroutines await on same task");
+            _p->_then = cb;
         }
 
         T await_resume()
