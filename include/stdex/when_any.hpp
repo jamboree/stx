@@ -17,11 +17,18 @@ namespace stdex { namespace task_detail
     {
         coroutine_handle<> coro;
         T result;
+        
+        explicit operator bool() const
+        {
+            return coro;
+        }
 
         void operator()(T val)
         {
+            auto run(coro);
+            coro = nullptr;
             result = val;
-            coro();
+            run();
         }
 
         bool await_ready() const noexcept
@@ -58,17 +65,18 @@ namespace stdex { namespace task_detail
     };
 
     template<class It, class Callback>
-    inline harness hook(It it, Callback& cb)
+    inline detached_task hook(It it, Callback& cb)
     {
-        await *it;
-        cb(it);
-    }
+        await until_awaken(*it);
+        if (cb)
+            cb(it);
+    };
 
     template<class It>
     inline void unhook(It it, It end)
     {
         for ( ; it != end; ++it)
-            harness::drop(*it);
+            manager::death_wakeup(*it);
     }
 
     template<class Callback, class T>
@@ -95,14 +103,14 @@ namespace stdex { namespace task_detail
     inline void recursive_unhook(unsigned i, unsigned n, task<T>& t)
     {
         if (i != n)
-            harness::drop(t);
+            manager::death_wakeup(t);
     }
 
     template<class T, class... Ts>
     inline void recursive_unhook(unsigned i, unsigned n, task<T>& t, task<Ts>&... ts)
     {
         if (i != n)
-            harness::drop(t);
+            manager::death_wakeup(t);
         recursive_unhook(++i, n, ts...);
     }
 }}

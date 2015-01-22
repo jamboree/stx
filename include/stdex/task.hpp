@@ -14,51 +14,6 @@
 
 namespace stdex { namespace task_detail
 {
-    struct harness
-    {
-        struct promise_type
-        {
-            bool canceling = false;
-
-            void cancel()
-            {
-                canceling = true;
-            }
-
-            harness get_return_object()
-            {
-                return{};
-            }
-
-            suspend_never initial_suspend()
-            {
-                return{};
-            }
-
-            suspend_never final_suspend()
-            {
-                return{};
-            }
-
-            bool cancellation_requested() const
-            {
-                return canceling;
-            }
-
-            void set_result() {}
-
-            void set_exception(std::exception_ptr const& e) {}
-        };
-
-        harness() {}
-
-        template<class Task>
-        static void drop(Task& task)
-        {
-            task.template abort_from<harness>();
-        }
-    };
-
     template<class T>
     struct wrap_reference
     {
@@ -115,9 +70,9 @@ namespace stdex { namespace task_detail
 
         promise_data() {}
 
-        T extract_value()
+        T&& extract_value()
         {
-            return std::move(_val);
+            return static_cast<T&&>(_val);
         }
 
         ~promise_data()
@@ -171,6 +126,37 @@ namespace stdex { namespace task_detail
 
     template<class F>
     auto await_result_test(F&& f) -> decltype(f.await_resume());
+
+    template<class Task>
+    inline auto until_awaken(Task& task)
+    {
+        struct awaiter
+        {
+            Task& task;
+
+            bool await_ready() const noexcept
+            {
+                return false;
+            }
+
+            auto await_suspend(coroutine_handle<> cb) noexcept
+            {
+                return task.await_suspend(cb);
+            }
+
+            void await_resume() {}
+        };
+        return awaiter{task};
+    }
+
+    struct manager
+    {
+        template<class Task>
+        static void death_wakeup(Task& task)
+        {
+            return task.death_wakeup();
+        }
+    };
 }}
 
 namespace stdex
@@ -206,7 +192,7 @@ namespace stdex
 
             friend class task;
 
-            T get()
+            std::add_rvalue_reference_t<T> get()
             {
                 if (this->_tag == task_detail::tag::value)
                     return this->extract_value();
@@ -261,16 +247,14 @@ namespace stdex
 
     private:
 
-        friend struct task_detail::harness;
+        friend struct task_detail::manager;
 
-        template<class Coroutine>
-        void abort_from()
+        // This should only be called if you can ensure that the contiuation
+        // will finish right after wakeup without further suspend.
+        void death_wakeup()
         {
-            using Promise = typename Coroutine::promise_type;
-            auto& then = static_cast<coroutine_handle<Promise>&>(_p->_then);
-            then.promise().cancel();
-            then();
-            then = nullptr;
+            _p->_then();
+            _p->_then = nullptr;
         }
 
         promise_type* _p;
