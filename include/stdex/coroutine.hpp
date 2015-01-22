@@ -39,6 +39,41 @@ namespace stdex
 
 #   endif
 
+namespace stdex
+{
+    struct detached_task
+    {
+        struct promise_type
+        {
+            detached_task get_return_object()
+            {
+                return{};
+            }
+
+            suspend_never initial_suspend()
+            {
+                return{};
+            }
+
+            suspend_never final_suspend()
+            {
+                return{};
+            }
+
+            bool cancellation_requested() const
+            {
+                return false;
+            }
+
+            void set_result() {}
+
+            void set_exception(std::exception_ptr const& e) {}
+        };
+
+        detached_task() {}
+    };
+}
+
 namespace stdex { namespace coroutine_detail
 {
     template<class F>
@@ -85,38 +120,6 @@ namespace stdex
         coroutine_detail::create_coroutine(ret, std::forward<F>(f));
         return ret;
     }
-
-    struct detached_task
-    {
-        struct promise_type
-        {
-            detached_task get_return_object()
-            {
-                return {};
-            }
-
-            suspend_never initial_suspend()
-            {
-                return {};
-            }
-
-            suspend_never final_suspend()
-            {
-                return {};
-            }
-
-            bool cancellation_requested() const
-            {
-                return false;
-            }
-
-            void set_result() {}
-
-            void set_exception(std::exception_ptr const& e) {}
-        };
-
-        detached_task() {}
-    };
 }
 
 #endif
