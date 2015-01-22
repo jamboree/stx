@@ -47,7 +47,7 @@ namespace stdex { namespace coroutine_detail
     template<class F>
     auto await_result_test(F&& f) -> decltype(f.await_resume());
 
-        struct yield_to
+    struct yield_to
     {
         coroutine_handle<>& coro;
 
