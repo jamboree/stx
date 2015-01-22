@@ -121,12 +121,6 @@ namespace stdex { namespace task_detail
         bool _token = false;
     };
 
-    template<class F>
-    auto await_result_test(F&& f) -> decltype(await_resume(f));
-
-    template<class F>
-    auto await_result_test(F&& f) -> decltype(f.await_resume());
-
     template<class Task>
     inline auto until_awaken(Task& task)
     {
@@ -259,9 +253,6 @@ namespace stdex
 
         promise_type* _p;
     };
-
-    template<class F>
-    using await_result_t = decltype(task_detail::await_result_test(std::declval<F>()));
 
 #   if defined(STDEX_HAS_STD_COROUTINE)
 

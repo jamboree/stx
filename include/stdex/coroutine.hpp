@@ -39,8 +39,53 @@ namespace stdex
 
 #   endif
 
+namespace stdex { namespace coroutine_detail
+{
+    template<class F>
+    auto await_result_test(F&& f) -> decltype(await_resume(f));
+
+    template<class F>
+    auto await_result_test(F&& f) -> decltype(f.await_resume());
+
+        struct yield_to
+    {
+        coroutine_handle<>& coro;
+
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+
+        void await_suspend(coroutine_handle<> cb) noexcept
+        {
+            coro = cb;
+        }
+
+        void await_resume() {}
+    };
+
+    template<class F>
+    inline detached_task create_coroutine(coroutine_handle<>& coro, F&& f)
+    {
+        await yield_to{coro};
+        f();
+    }
+}}
+
 namespace stdex
 {
+    template<class F>
+    using await_result_t =
+        decltype(coroutine_detail::await_result_test(std::declval<F>()));
+
+    template<class F>
+    inline coroutine_handle<> make_coroutine_handle(F&& f)
+    {
+        coroutine_handle<> ret;
+        coroutine_detail::create_coroutine(ret, std::forward<F>(f));
+        return ret;
+    }
+
     struct detached_task
     {
         struct promise_type
@@ -72,44 +117,6 @@ namespace stdex
 
         detached_task() {}
     };
-}
-
-namespace stdex { namespace coroutine_detail
-{
-    struct yield_to
-    {
-        coroutine_handle<>& coro;
-
-        bool await_ready() const noexcept
-        {
-            return false;
-        }
-
-        void await_suspend(coroutine_handle<> cb) noexcept
-        {
-            coro = cb;
-        }
-
-        void await_resume() {}
-    };
-
-    template<class F>
-    inline detached_task create_coroutine(coroutine_handle<>& coro, F&& f)
-    {
-        await yield_to{coro};
-        f();
-    }
-}}
-
-namespace stdex
-{
-    template<class F>
-    inline coroutine_handle<> make_coroutine_handle(F&& f)
-    {
-        coroutine_handle<> ret;
-        coroutine_detail::create_coroutine(ret, std::forward<F>(f));
-        return ret;
-    }
 }
 
 #endif
