@@ -9,7 +9,7 @@
 
 #include <functional>
 #include <type_traits>
-#include <stdex/coroutine.hpp>
+#include <stdex/coroutine/core.hpp>
 #include <boost/system/system_error.hpp>
 
 namespace stdex { namespace act { namespace detail
