@@ -19,7 +19,6 @@ lib for c++14 and forward
 - __binary_search__: binary_search that returns an iterator
 - __overload__: overload callable objects
 - __task__: awaitable task based on [N4286](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4286.pdf)
-- __act__: [ASIO](http://www.boost.org/doc/libs/release/doc/html/boost_asio.html) Cooperative Task
 
 ## License
 
