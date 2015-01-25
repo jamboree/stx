@@ -7,6 +7,7 @@
 #ifndef STDEX_COROUTINE_TASK_HPP_INCLUDED
 #define STDEX_COROUTINE_TASK_HPP_INCLUDED
 
+#include <atomic>
 #include <functional>
 #include <type_traits>
 #include <stdex/coroutine/core.hpp>
@@ -37,12 +38,12 @@ namespace stdex { namespace task_detail
     {
     protected:
 
-        coroutine_handle<> _then;
+        std::atomic<coroutine_handle<>> _then {coroutine_handle<>()};
 
         void notify()
         {
-            if (_then)
-                _then();
+            if (auto run = _then.load(std::memory_order_relaxed))
+                run();
         }
     };
 
@@ -55,14 +56,14 @@ namespace stdex { namespace task_detail
         void set_result(U&& u)
         {
             new(&_val) val_t(std::forward<U>(u));
-            _tag = tag::value;
+            _tag.store(tag::value, std::memory_order_release);
             notify();
         }
 
         void set_exception(std::exception_ptr const& e)
         {
             new(&_e) std::exception_ptr(e);
-            _tag = tag::exception;
+            _tag.store(tag::exception, std::memory_order_release);
             notify();
         }
 
@@ -92,8 +93,8 @@ namespace stdex { namespace task_detail
             val_t _val;
             std::exception_ptr _e;
         };
-        tag _tag = tag::null;
-        bool _token = false;
+        std::atomic<tag> _tag {tag::null};
+        std::atomic<std::uint8_t> _token {false};
     };
 
     template<>
@@ -101,14 +102,14 @@ namespace stdex { namespace task_detail
     {
         void set_result()
         {
-            _tag = tag::value;
+            _tag.store(tag::value, std::memory_order_release);
             notify();
         }
 
         void set_exception(std::exception_ptr const& e)
         {
             _e = e;
-            _tag = tag::exception;
+            _tag.store(tag::exception, std::memory_order_release);
             notify();
         }
 
@@ -117,8 +118,8 @@ namespace stdex { namespace task_detail
         void extract_value() {}
 
         std::exception_ptr _e;
-        tag _tag = tag::null;
-        bool _token = false;
+        std::atomic<tag> _tag {tag::null};
+        std::atomic<std::uint8_t> _token {false};
     };
 
     template<class Task>
@@ -188,16 +189,21 @@ namespace stdex
 
             std::add_rvalue_reference_t<T> get()
             {
-                if (this->_tag == task_detail::tag::value)
+                if (this->_tag.load(std::memory_order_acquire) == task_detail::tag::value)
                     return this->extract_value();
                 std::rethrow_exception(this->_e);
             }
 
             bool transfer_ownership()
             {
-                return this->_token = !this->_token;
+                return !this->_token.fetch_xor(true, std::memory_order_relaxed);
             }
+
+            // We could put `_token` here, but for better member packing, it's
+            // put inside the base promise_data<T>.
         };
+
+        task() noexcept : _p() {}
 
         explicit task(promise_type& p) noexcept : _p(&p) {}
 
@@ -219,13 +225,14 @@ namespace stdex
 
         bool await_ready() const noexcept
         {
-            return _p->_tag != task_detail::tag::null;
+            return _p->_tag.load(std::memory_order_relaxed) != task_detail::tag::null;
         }
 
-        void await_suspend(coroutine_handle<> cb) noexcept
+        bool await_suspend(coroutine_handle<> cb) noexcept
         {
-            BOOST_ASSERT_MSG(!_p->_then, "multiple coroutines await on same task");
-            _p->_then = cb;
+            auto old = _p->_then.exchange(cb, std::memory_order_relaxed);
+            BOOST_ASSERT_MSG(!old, "multiple coroutines await on same task");
+            return _p->_tag.load(std::memory_order_relaxed) == task_detail::tag::null;
         }
 
         T await_resume()
@@ -247,8 +254,8 @@ namespace stdex
         // will finish right after wakeup without further suspend.
         void death_wakeup()
         {
-            _p->_then();
-            _p->_then = nullptr;
+            auto run = _p->_then.exchange(nullptr, std::memory_order_relaxed);
+            run();
         }
 
         promise_type* _p;
