@@ -13,9 +13,16 @@ namespace stdex
 {
     struct spinlock
     {
-        spinlock() : _flag{ATOMIC_FLAG_INIT} {}
-
+#   if defined(_MSC_VER)
+        spinlock() noexcept
+        {
+            _flag.clear();
+        }
+#   else
+        spinlock() noexcept : _flag{ATOMIC_FLAG_INIT} {}
+#   endif
         spinlock(spinlock const&) = delete;
+        spinlock& operator=(spinlock const&) = delete;
 
         void lock()
         {
@@ -38,9 +45,10 @@ namespace stdex
 
     public:
 
-        shared_spinlock() : _flags(0) {}
+        shared_spinlock() noexcept : _flags(0) {}
 
         shared_spinlock(shared_spinlock const&) = delete;
+        shared_spinlock& operator=(shared_spinlock const&) = delete;
 
         void lock()
         {
@@ -133,10 +141,13 @@ namespace stdex
     template<class Mutex>
     struct shared_lock_guard
     {
-        explicit shared_lock_guard(Mutex& mutex) : _mutex(mutex)
+        explicit shared_lock_guard(Mutex& mutex) noexcept
+          : _mutex(mutex)
         {
             lock.lock_shared();
         }
+
+        shared_lock_guard(shared_lock_guard const&) = delete;
 
         ~shared_lock_guard()
         {
