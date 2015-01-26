@@ -105,7 +105,7 @@ namespace stdex
 
         void unlock_shared()
         {
-            _flags.fetch_and(~shared, std::memory_order_release);
+            _flags.fetch_sub(shared, std::memory_order_release);
         }
 
         bool try_lock()
@@ -116,10 +116,10 @@ namespace stdex
 
         bool try_lock_shared()
         {
-            std::uint32_t value = _flags.fetch_or(shared, std::memory_order_acquire);
+            std::uint32_t value = _flags.fetch_add(shared, std::memory_order_acquire);
             if (value & unique)
             {
-                _flags.fetch_and(~shared, std::memory_order_release);
+                _flags.fetch_sub(shared, std::memory_order_release);
                 return false;
             }
             return true;
