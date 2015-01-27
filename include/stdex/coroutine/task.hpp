@@ -42,7 +42,7 @@ namespace stdex { namespace task_detail
 
         void notify()
         {
-            if (auto run = _then.load(std::memory_order_relaxed))
+            if (auto run = _then.exchange(nullptr, std::memory_order_relaxed))
                 run();
         }
     };
@@ -254,8 +254,8 @@ namespace stdex
         // will finish right after wakeup without further suspend.
         void death_wakeup()
         {
-            auto run = _p->_then.exchange(nullptr, std::memory_order_relaxed);
-            run();
+            if (auto run = _p->_then.exchange(nullptr, std::memory_order_relaxed))
+                run();
         }
 
         promise_type* _p;

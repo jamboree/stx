@@ -16,7 +16,7 @@ namespace stdex
 #   if defined(_MSC_VER)
         spinlock() noexcept
         {
-            _flag.clear();
+            _flag.clear(std::memory_order_relaxed);
         }
 #   else
         spinlock() noexcept : _flag{ATOMIC_FLAG_INIT} {}
@@ -58,6 +58,11 @@ namespace stdex
         void lock_shared()
         {
             while (!try_lock_shared());
+        }
+
+        void lock_upgrade()
+        {
+            while (!try_lock_upgrade());
         }
 #if 0
         template<class Rep, class Period>
@@ -116,6 +121,11 @@ namespace stdex
             _flags.fetch_sub(shared, std::memory_order_release);
         }
 
+        void unlock_upgrade()
+        {
+            unlock();
+        }
+
         bool try_lock()
         {
             std::uint32_t expect = 0;
@@ -131,6 +141,12 @@ namespace stdex
                 return false;
             }
             return true;
+        }
+
+        bool try_lock_upgrade()
+        {
+            std::uint32_t value = _flags.fetch_or(unique, std::memory_order_acquire);
+            return (value & ~unique) == shared;
         }
 
     private:
@@ -152,6 +168,27 @@ namespace stdex
         ~shared_lock_guard()
         {
             lock.unlock_shared();
+        }
+
+    private:
+
+        Mutex& _mutex;
+    };
+
+    template<class Mutex>
+    struct upgrade_lock_guard
+    {
+        explicit upgrade_lock_guard(Mutex& mutex) noexcept
+          : _mutex(mutex)
+        {
+            lock.lock_upgrade();
+        }
+
+        upgrade_lock_guard(upgrade_lock_guard const&) = delete;
+
+        ~upgrade_lock_guard()
+        {
+            lock.unlock_upgrade();
         }
 
     private:

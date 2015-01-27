@@ -7,6 +7,7 @@
 #ifndef STDEX_COROUTINE_WHEN_ANY_HPP_INCLUDED
 #define STDEX_COROUTINE_WHEN_ANY_HPP_INCLUDED
 
+#include <atomic>
 #include <iterator>
 #include <stdex/coroutine/task.hpp>
 
@@ -15,20 +16,18 @@ namespace stdex { namespace task_detail
     template<class T>
     struct callback_hook
     {
-        coroutine_handle<> coro;
+        std::atomic<coroutine_handle<>> coro;
         T result;
-        
-        explicit operator bool() const
-        {
-            return coro;
-        }
+        std::atomic<bool> ready {false};
 
         void operator()(T val)
         {
-            auto run(coro);
-            coro = nullptr;
-            result = val;
-            run();
+            while (!ready.load(std::memory_order_acquire));
+            if (auto run = coro.exchange(nullptr, std::memory_order_relaxed))
+            {
+                result = val;
+                run();
+            }
         }
 
         bool await_ready() const noexcept
@@ -38,7 +37,8 @@ namespace stdex { namespace task_detail
 
         void await_suspend(coroutine_handle<> cb) noexcept
         {
-            coro = cb;
+            coro.store(cb, std::memory_order_relaxed);
+            ready.store(true, std::memory_order_release);
         }
 
         T await_resume()
@@ -68,8 +68,7 @@ namespace stdex { namespace task_detail
     inline detached_task hook(It it, Callback& cb)
     {
         await until_awaken(*it);
-        if (cb)
-            cb(it);
+        cb(it);
     };
 
     template<class It>
