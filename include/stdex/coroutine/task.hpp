@@ -42,7 +42,7 @@ namespace stdex { namespace task_detail
 
         void notify()
         {
-            if (auto run = _then.exchange(nullptr, std::memory_order_relaxed))
+            if (auto run = _then.exchange({}, std::memory_order_relaxed))
                 run();
         }
     };
@@ -233,7 +233,7 @@ namespace stdex
             auto old = _p->_then.exchange(cb, std::memory_order_relaxed);
             BOOST_ASSERT_MSG(!old, "multiple coroutines await on same task");
             return _p->_tag.load(std::memory_order_relaxed) == task_detail::tag::null
-               || !_p->_then.exchange(nullptr, std::memory_order_relaxed);
+                || !_p->_then.exchange({}, std::memory_order_relaxed);
         }
 
         T await_resume()
