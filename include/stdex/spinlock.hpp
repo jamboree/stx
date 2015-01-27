@@ -60,10 +60,6 @@ namespace stdex
             while (!try_lock_shared());
         }
 
-        void lock_upgrade()
-        {
-            while (!try_lock_upgrade());
-        }
 #if 0
         template<class Rep, class Period>
         bool try_lock_for(std::chrono::duration<Rep,Period> const& duration)
@@ -121,10 +117,6 @@ namespace stdex
             _flags.fetch_sub(shared, std::memory_order_release);
         }
 
-        void unlock_upgrade()
-        {
-            unlock();
-        }
 
         bool try_lock()
         {
@@ -141,12 +133,6 @@ namespace stdex
                 return false;
             }
             return true;
-        }
-
-        bool try_lock_upgrade()
-        {
-            std::uint32_t value = _flags.fetch_or(unique, std::memory_order_acquire);
-            return (value & ~unique) == shared;
         }
 
     private:
@@ -168,27 +154,6 @@ namespace stdex
         ~shared_lock_guard()
         {
             lock.unlock_shared();
-        }
-
-    private:
-
-        Mutex& _mutex;
-    };
-
-    template<class Mutex>
-    struct upgrade_lock_guard
-    {
-        explicit upgrade_lock_guard(Mutex& mutex) noexcept
-          : _mutex(mutex)
-        {
-            lock.lock_upgrade();
-        }
-
-        upgrade_lock_guard(upgrade_lock_guard const&) = delete;
-
-        ~upgrade_lock_guard()
-        {
-            lock.unlock_upgrade();
         }
 
     private:
