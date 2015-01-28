@@ -35,6 +35,32 @@ namespace stdex
     using std::experimental::suspend_never;
     using std::experimental::suspend_always;
     using std::experimental::suspend_if;
+
+    template<class Promise>
+    struct this_promise
+    {
+        this_promise() = default;
+
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+
+        bool await_suspend(coroutine_handle<Promise> cb) noexcept
+        {
+            _p = cb.promise();
+            return false;
+        }
+
+        Promise& await_resume()
+        {
+            return *_p;
+        }
+
+    private:
+
+        Promise* _p;
+    };
 }
 
 #   endif
