@@ -7,6 +7,8 @@
 #ifndef STDEX_COROUTINE_CORE_HPP_INCLUDED
 #define STDEX_COROUTINE_CORE_HPP_INCLUDED
 
+#include <atomic>
+
 #   if defined(STDEX_HAS_STD_COROUTINE)
 
 #   include <coroutine>
@@ -97,6 +99,65 @@ namespace stdex
         };
 
         detached_task() {}
+    };
+
+    struct attached_task
+    {
+        struct promise_type
+        {
+            attached_task get_return_object()
+            {
+                return task(_canceled);
+            }
+
+            dsuspend_never initial_suspend()
+            {
+                return {};
+            }
+
+            dsuspend_never final_suspend()
+            {
+                return {};
+            }
+
+            bool cancellation_requested() const
+            {
+                return _canceled.load(std::memory_order_relaxed);
+            }
+
+            void set_result() {}
+
+            void set_exception(std::exception_ptr const& e) {}
+
+        private:
+
+            std::atomic<bool> _canceled {false};
+        };
+
+        explicit attached_task(std::atomic<bool>& canceled)
+          : _canceled(&canceled)
+        {}
+
+        attached_task(attached_task&& other) noexcept
+          : _canceled(other._canceled)
+        {
+            other._canceled = nullptr;
+        }
+
+        attached_task& operator=(attached_task&& other) noexcept
+        {
+            ~attached_task();
+            return *new(this) attached_task(std::move(other));
+        }
+
+        ~attached_task()
+        {
+            _canceled->store(true, std::memory_order_relaxed);
+        }
+
+    private:
+
+        std::atomic<bool>* _canceled;
     };
 }
 
