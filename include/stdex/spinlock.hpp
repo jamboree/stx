@@ -146,14 +146,14 @@ namespace stdex
         explicit shared_lock_guard(Mutex& mutex) noexcept
           : _mutex(mutex)
         {
-            lock.lock_shared();
+            _mutex.lock_shared();
         }
 
         shared_lock_guard(shared_lock_guard const&) = delete;
 
         ~shared_lock_guard()
         {
-            lock.unlock_shared();
+            _mutex.unlock_shared();
         }
 
     private:

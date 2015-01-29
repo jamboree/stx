@@ -50,7 +50,7 @@ namespace stdex
 
         bool await_suspend(coroutine_handle<Promise> cb) noexcept
         {
-            _p = cb.promise();
+            _p = &cb.promise();
             return false;
         }
 
@@ -107,15 +107,15 @@ namespace stdex
         {
             attached_task get_return_object()
             {
-                return task(_canceled);
+                return attached_task(_canceled);
             }
 
-            dsuspend_never initial_suspend()
+            suspend_never initial_suspend()
             {
                 return {};
             }
 
-            dsuspend_never final_suspend()
+            suspend_never final_suspend()
             {
                 return {};
             }
@@ -146,7 +146,7 @@ namespace stdex
 
         attached_task& operator=(attached_task&& other) noexcept
         {
-            ~attached_task();
+            this->~attached_task();
             return *new(this) attached_task(std::move(other));
         }
 
