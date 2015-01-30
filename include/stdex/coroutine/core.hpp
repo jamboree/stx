@@ -107,7 +107,7 @@ namespace stdex
         {
             attached_task get_return_object()
             {
-                return attached_task(_canceled);
+                return attached_task(*this);
             }
 
             suspend_never initial_suspend()
@@ -115,14 +115,14 @@ namespace stdex
                 return {};
             }
 
-            suspend_never final_suspend()
+            auto final_suspend()
             {
-                return {};
+                return suspend_if(transfer());
             }
 
             bool cancellation_requested() const
             {
-                return _canceled.load(std::memory_order_relaxed);
+                return !_active.load(std::memory_order_relaxed);
             }
 
             void set_result() {}
@@ -131,17 +131,22 @@ namespace stdex
 
         private:
 
-            std::atomic<bool> _canceled {false};
+            friend struct attached_task;
+
+            bool transfer()
+            {
+                return _active.fetch_xor(true, std::memory_order_relaxed);
+            }
+
+            std::atomic<std::uint8_t> _active {true};
         };
 
-        explicit attached_task(std::atomic<bool>& canceled)
-          : _canceled(&canceled)
-        {}
+        explicit attached_task(promise_type& p) noexcept : _p(&p) {}
 
         attached_task(attached_task&& other) noexcept
-          : _canceled(other._canceled)
+          : _canceled(other._p)
         {
-            other._canceled = nullptr;
+            other._p = nullptr;
         }
 
         attached_task& operator=(attached_task&& other) noexcept
@@ -152,12 +157,13 @@ namespace stdex
 
         ~attached_task()
         {
-            _canceled->store(true, std::memory_order_relaxed);
+            if (_p && !_p->transfer())
+                coroutine_handle<promise_type>::from_promise(_p)();
         }
 
     private:
 
-        std::atomic<bool>* _canceled;
+        promise_type* _p;
     };
 }
 
