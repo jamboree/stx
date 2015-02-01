@@ -4,17 +4,17 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_ATOMIC_USE_COUNT_HPP_INCLUDED
-#define STDEX_ATOMIC_USE_COUNT_HPP_INCLUDED
+#ifndef STDEX_ATOMIC_COUNT_HPP_INCLUDED
+#define STDEX_ATOMIC_COUNT_HPP_INCLUDED
 
 #include <atomic>
 
 namespace stdex
 {
     template<class T>
-    struct atomic_use_count
+    struct atomic_count
     {
-        atomic_use_count(T n) noexcept : _n(n) {}
+        atomic_count(T n) noexcept : _n(n) {}
 
         void inc()
         {

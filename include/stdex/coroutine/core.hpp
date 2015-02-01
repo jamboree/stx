@@ -141,10 +141,12 @@ namespace stdex
             std::atomic<std::uint8_t> _active {true};
         };
 
+        attached_task() noexcept : _p() {}
+
         explicit attached_task(promise_type& p) noexcept : _p(&p) {}
 
         attached_task(attached_task&& other) noexcept
-          : _canceled(other._p)
+          : _p(other._p)
         {
             other._p = nullptr;
         }
@@ -159,6 +161,16 @@ namespace stdex
         {
             if (_p && !_p->transfer())
                 coroutine_handle<promise_type>::from_promise(_p)();
+        }
+
+        void reset()
+        {
+            if (_p)
+            {
+                if (!_p->transfer())
+                    coroutine_handle<promise_type>::from_promise(_p)();
+                _p = nullptr;
+            }
         }
 
     private:
