@@ -13,6 +13,7 @@ lib for c++14 and forward
 - __function_ref__: non-allocating synchronous function callback
 - __enable_if_valid__: SFINAE utility
 - __is_iterator__: iterator traits
+- __is_callable__: check if callable (with an optional return type)
 - __priority__: priority-based tag-dispatching utility
 - __reconstruct__: object reconstruction utility
 - __find__: `find` and `contains` algorithms

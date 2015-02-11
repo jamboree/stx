@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <stdex/is_callable.hpp>
 
 namespace stdex
 {
@@ -19,12 +20,9 @@ namespace stdex
     class function_ref<R(Ts...)>
     {
         template<class F>
-        using is_callable = std::is_convertible<std::result_of_t<F(Ts...)>, R>;
-
-        template<class T>
         using enable_other_callable =
-            std::enable_if_t<!std::is_same<std::decay_t<T>, function_ref>::value
-              && is_callable<T>::value, bool>;
+            std::enable_if_t<!std::is_same<std::decay_t<F>, function_ref>::value
+              && is_callable<F(Ts...), R>::value, bool>;
 
         template<class F>
         static R invoke(std::uintptr_t p, Ts&&... ts)
@@ -43,7 +41,7 @@ namespace stdex
           , _f(invoke<std::remove_reference_t<F>>)
         {}
 
-        template<class F, std::enable_if_t<is_callable<F>::value, bool> = true>
+        template<class F, std::enable_if_t<is_callable<F*(Ts...), R>::value, bool> = true>
         function_ref(F* f) noexcept
           : _p(reinterpret_cast<std::uintptr_t>(f)), _f(invoke<F>)
         {}
