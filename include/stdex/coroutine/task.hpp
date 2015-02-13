@@ -78,7 +78,7 @@ namespace stdex { namespace task_detail
 
         ~promise_data()
         {
-            switch (_tag)
+            switch (_tag.load(std::memory_order_relaxed))
             {
             case tag::value:
                 _val.~val_t();
