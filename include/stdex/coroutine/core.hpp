@@ -37,6 +37,24 @@ namespace stdex
     using std::experimental::suspend_never;
     using std::experimental::suspend_always;
     using std::experimental::suspend_if;
+}
+
+#   endif
+
+namespace stdex { namespace coroutine_detail
+{
+    template<class F>
+    auto await_result_test(F&& f) -> decltype(await_resume(f));
+
+    template<class F>
+    auto await_result_test(F&& f) -> decltype(f.await_resume());
+}}
+
+namespace stdex
+{
+    template<class F>
+    using await_result_t =
+        decltype(coroutine_detail::await_result_test(std::declval<F>()));
 
     template<class Promise>
     struct this_promise
@@ -63,12 +81,7 @@ namespace stdex
 
         Promise* _p;
     };
-}
 
-#   endif
-
-namespace stdex
-{
     struct detached_task
     {
         struct promise_type
@@ -177,53 +190,57 @@ namespace stdex
 
         promise_type* _p;
     };
-}
 
-namespace stdex { namespace coroutine_detail
-{
-    template<class F>
-    auto await_result_test(F&& f) -> decltype(await_resume(f));
-
-    template<class F>
-    auto await_result_test(F&& f) -> decltype(f.await_resume());
-
-    struct yield_to
+    struct coroutine : coroutine_handle<>
     {
-        coroutine_handle<>& coro;
-
-        bool await_ready() const noexcept
+        struct promise_type
         {
-            return false;
-        }
+            coroutine get_return_object()
+            {
+                return coroutine_handle<promise_type>::from_promise(this);
+            }
 
-        void await_suspend(coroutine_handle<> cb) noexcept
+            suspend_never initial_suspend()
+            {
+                return {};
+            }
+
+            suspend_never final_suspend()
+            {
+                return {};
+            }
+
+            bool cancellation_requested() const
+            {
+                return cancelled;
+            }
+
+            void set_result() {}
+
+            void set_exception(std::exception_ptr const& e)
+            {
+                std::rethrow_exception(e);
+            }
+
+            bool cancelled = false;
+        };
+
+        coroutine(coroutine_handle<> coro)
+          : coroutine_handle<>(coro)
+        {}
+
+        void cancel()
         {
-            coro = cb;
+            static_cast<coroutine_handle<promise_type>*>(this)->cancelled = true;
+            (*this)();
         }
-
-        void await_resume() {}
     };
 
     template<class F>
-    inline detached_task create_coroutine(coroutine_handle<>& coro, F&& f)
+    inline coroutine make_coroutine(F f)
     {
-        await yield_to{coro};
+        await suspend_always{};
         f();
-    }
-}}
-
-namespace stdex
-{
-    template<class F>
-    using await_result_t =
-        decltype(coroutine_detail::await_result_test(std::declval<F>()));
-
-    template<class F>
-    inline coroutine_handle<> make_coroutine_handle(F&& f)
-    {
-        coroutine_handle<> ret;
-        coroutine_detail::create_coroutine(ret, std::forward<F>(f));
-        return ret;
     }
 }
 
