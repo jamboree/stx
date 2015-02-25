@@ -231,7 +231,7 @@ namespace stdex
 
         void cancel()
         {
-            static_cast<coroutine_handle<promise_type>*>(this)->cancelled = true;
+            static_cast<coroutine_handle<promise_type>*>(static_cast<coroutine_handle<>*>(this))->promise().cancelled = true;
             (*this)();
         }
     };
