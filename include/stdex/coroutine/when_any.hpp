@@ -23,7 +23,7 @@ namespace stdex { namespace task_detail
         void operator()(T val)
         {
             while (!ready.load(std::memory_order_acquire));
-            if (auto run = coro.exchange(nullptr, std::memory_order_relaxed))
+            if (auto run = coro.exchange({}, std::memory_order_relaxed))
             {
                 result = val;
                 run();

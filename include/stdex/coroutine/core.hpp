@@ -242,6 +242,28 @@ namespace stdex
         await suspend_always{};
         f();
     }
+
+    template<class Task>
+    inline auto until_awaken(Task& task)
+    {
+        struct awaiter
+        {
+            Task& task;
+
+            bool await_ready() const noexcept
+            {
+                return false;
+            }
+
+            auto await_suspend(coroutine_handle<> cb) noexcept
+            {
+                return task.await_suspend(cb);
+            }
+
+            void await_resume() {}
+        };
+        return awaiter {task};
+    }
 }
 
 #endif

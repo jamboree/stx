@@ -122,28 +122,6 @@ namespace stdex { namespace task_detail
         std::atomic<std::uint8_t> _token {false};
     };
 
-    template<class Task>
-    inline auto until_awaken(Task& task)
-    {
-        struct awaiter
-        {
-            Task& task;
-
-            bool await_ready() const noexcept
-            {
-                return false;
-            }
-
-            auto await_suspend(coroutine_handle<> cb) noexcept
-            {
-                return task.await_suspend(cb);
-            }
-
-            void await_resume() {}
-        };
-        return awaiter{task};
-    }
-
     struct manager
     {
         template<class Task>
@@ -189,9 +167,9 @@ namespace stdex
 
             std::add_rvalue_reference_t<T> get()
             {
-                if (this->_tag.load(std::memory_order_acquire) == task_detail::tag::value)
-                    return this->extract_value();
-                std::rethrow_exception(this->_e);
+                if (this->_tag.load(std::memory_order_acquire) == task_detail::tag::exception)
+                    std::rethrow_exception(this->_e);
+                return this->extract_value();
             }
 
             bool transfer_ownership()
@@ -255,7 +233,7 @@ namespace stdex
         // will finish right after wakeup without further suspend.
         void death_wakeup()
         {
-            if (auto run = _p->_then.exchange(nullptr, std::memory_order_relaxed))
+            if (auto run = _p->_then.exchange({}, std::memory_order_relaxed))
                 run();
         }
 
