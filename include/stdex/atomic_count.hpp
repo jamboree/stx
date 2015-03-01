@@ -33,7 +33,7 @@ namespace stdex
 
     private:
 
-        std::atomic<unsigned> _n;
+        std::atomic<T> _n;
     };
 }
 
