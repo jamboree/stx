@@ -8,6 +8,7 @@
 #define STDEX_COROUTINE_CORE_HPP_INCLUDED
 
 #include <atomic>
+#include <stdex/atomic_count.hpp>
 
 #   if defined(STDEX_HAS_STD_COROUTINE)
 
@@ -80,6 +81,227 @@ namespace stdex
     private:
 
         Promise* _p;
+    };
+
+    struct promise_base
+    {
+        suspend_never initial_suspend()
+        {
+            return {};
+        }
+
+        suspend_always final_suspend()
+        {
+            return {};
+        }
+
+        bool cancellation_requested() const
+        {
+            return !use_count.get();
+        }
+
+        stdex::atomic_count<unsigned> use_count {1};
+    };
+
+    template<class Promise = void>
+    struct continuation;
+
+    template<class Promise>
+    struct continuation
+    {
+        using promise_type = Promise;
+
+        continuation() : _handle() {}
+
+        continuation(std::nullptr_t) : _handle() {}
+
+        explicit continuation(Promise* promise)
+            : _handle(coroutine_handle<Promise>::from_promise(promise))
+        {}
+
+        continuation(coroutine_handle<Promise> handle)
+            : _handle(handle)
+        {
+            if (handle)
+                count().inc();
+        }
+
+        continuation(continuation const& other)
+            : continuation(other._handle)
+        {}
+
+        continuation(continuation&& other) noexcept
+            : _handle(other._handle)
+        {
+            other._handle = nullptr;
+        }
+
+        ~continuation()
+        {
+            if (_handle && !count().dec())
+                _handle();
+        }
+
+        continuation& operator=(continuation other) noexcept
+        {
+            swap(other);
+            return *this;
+        }
+
+        void swap(continuation& other) noexcept
+        {
+            std::swap(_handle, other._handle);
+        }
+
+        void reset()
+        {
+            _handle = nullptr;
+        }
+
+        coroutine_handle<Promise> get_handle() const
+        {
+            return _handle;
+        }
+
+        void operator()() const noexcept
+        {
+            _handle();
+        }
+
+        explicit operator bool() const noexcept
+        {
+            return static_cast<bool>(_handle);
+        }
+
+        Promise& promise() noexcept
+        {
+            return _handle.promise();
+        }
+
+        Promise const& promise() const noexcept
+        {
+            return _handle.promise();
+        }
+
+    private:
+
+        stdex::atomic_count<unsigned>& count()
+        {
+            return _handle.promise().promise_base::use_count;
+        }
+
+        coroutine_handle<Promise> _handle;
+    };
+
+    template<>
+    struct continuation<void>
+    {
+        struct promise_type : promise_base
+        {
+            continuation get_return_object()
+            {
+                return continuation(this);
+            }
+
+            void set_result() {}
+
+            void set_exception(std::exception_ptr const&)
+            {
+                std::terminate();
+            }
+        };
+
+        continuation() : _handle() {}
+
+        continuation(std::nullptr_t) : _handle() {}
+
+        template<class Promise>
+        explicit continuation(Promise* promise)
+          : _handle(coroutine_handle<Promise>::from_promise(promise))
+          , _count(&promise->promise_base::use_count)
+        {}
+
+        template<class Promise>
+        continuation(coroutine_handle<Promise> handle)
+            : _handle(handle)
+        {
+            if (handle)
+            {
+                _count = &handle.promise().promise_base::use_count;
+                _count->inc();
+            }
+        }
+
+        template<class Promise>
+        continuation(continuation<Promise> const& coro)
+            : continuation(coro._handle)
+        {}
+
+        continuation(continuation const& other)
+            : _handle(other._handle), _count(other._count)
+        {
+            if (_handle)
+                _count->inc();
+        }
+
+        continuation(continuation&& other) noexcept
+            : _handle(other._handle), _count(other._count)
+        {
+            other._handle = nullptr;
+        }
+
+        ~continuation()
+        {
+            if (_handle && !_count->dec())
+                _handle();
+        }
+
+        continuation& operator=(continuation other) noexcept
+        {
+            swap(other);
+            return *this;
+        }
+
+        void swap(continuation& other) noexcept
+        {
+            std::swap(_handle, other._handle);
+            std::swap(_count, other._count);
+        }
+
+        void reset()
+        {
+            _handle = nullptr;
+        }
+
+        coroutine_handle<> get_handle() const
+        {
+            return _handle;
+        }
+
+        void operator()() const noexcept
+        {
+            _handle();
+        }
+
+        explicit operator bool() const noexcept
+        {
+            return static_cast<bool>(_handle);
+        }
+
+    private:
+
+        coroutine_handle<> _handle;
+        stdex::atomic_count<unsigned>* _count;
+    };
+
+    template<class Derived>
+    struct pausable
+    {
+        template<class Promise>
+        auto await_suspend(coroutine_handle<Promise> cb) noexcept
+        {
+            return static_cast<Derived*>(this)->await_pause(continuation<Promise>(cb));
+        }
     };
 
     struct detached_task
@@ -217,9 +439,9 @@ namespace stdex
 
             void set_result() {}
 
-            void set_exception(std::exception_ptr const& e)
+            void set_exception(std::exception_ptr const&)
             {
-                std::rethrow_exception(e);
+                std::terminate();
             }
 
             bool cancelled = false;
