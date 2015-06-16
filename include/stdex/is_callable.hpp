@@ -23,12 +23,12 @@ namespace stdex { namespace detail
     struct is_resultable<T, dont_care> : std::true_type {};
 
     template<class F, class R, class... Ts>
-    auto is_callable(Ts&&... ts) -> std::enable_if_t<is_resultable<
+    auto is_callable(int, Ts&&... ts) -> std::enable_if_t<is_resultable<
         decltype(std::declval<F>()(std::forward<Ts>(ts)...)), R>::value
       , std::true_type>;
 
     template<class F, class R>
-    auto is_callable(...) -> std::false_type;
+    auto is_callable(float, ...) -> std::false_type;
 }}
 
 namespace stdex
@@ -38,7 +38,7 @@ namespace stdex
     
     template<class F, class... Ts, class R>
     struct is_callable<F(Ts...), R>
-      : decltype(detail::is_callable<F, R>(std::declval<Ts>()...))
+      : decltype(detail::is_callable<F, R>(0, std::declval<Ts>()...))
     {};
 }
 
