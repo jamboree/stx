@@ -13,20 +13,18 @@ namespace stdex
 {
     struct spinlock
     {
-#   if defined(_MSC_VER)
-        spinlock() noexcept
-        {
-            _flag.clear(std::memory_order_relaxed);
-        }
-#   else
         spinlock() noexcept : _flag{ATOMIC_FLAG_INIT} {}
-#   endif
         spinlock(spinlock const&) = delete;
         spinlock& operator=(spinlock const&) = delete;
 
         void lock()
         {
-            while (!_flag.test_and_set(std::memory_order_acquire));
+            while (_flag.test_and_set(std::memory_order_acquire));
+        }
+
+        bool try_lock()
+        {
+            return !_flag.test_and_set(std::memory_order_acquire);
         }
 
         void unlock()
