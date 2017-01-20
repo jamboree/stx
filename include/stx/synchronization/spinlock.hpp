@@ -1,18 +1,21 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_SPINLOCK_HPP_INCLUDED
-#define STDEX_SPINLOCK_HPP_INCLUDED
+#ifndef STX_SYNCHRONIZATION_SPINLOCK_HPP_INCLUDED
+#define STX_SYNCHRONIZATION_SPINLOCK_HPP_INCLUDED
 
 #include <atomic>
 
-namespace stdex
+namespace stx
 {
-    struct spinlock
+    class spinlock
     {
+        std::atomic_flag _flag;
+
+    public:
         spinlock() noexcept : _flag{ATOMIC_FLAG_INIT} {}
         spinlock(spinlock const&) = delete;
         spinlock& operator=(spinlock const&) = delete;
@@ -31,10 +34,6 @@ namespace stdex
         {
             _flag.clear(std::memory_order_release);
         }
-
-    private:
-
-        std::atomic_flag _flag;
     };
 
     class shared_spinlock
@@ -42,7 +41,6 @@ namespace stdex
         enum ownership : uint32_t { unique = 1, shared = 2 };
 
     public:
-
         shared_spinlock() noexcept : _flags(0) {}
 
         shared_spinlock(shared_spinlock const&) = delete;
@@ -136,27 +134,6 @@ namespace stdex
     private:
 
         std::atomic<std::uint32_t> _flags;
-    };
-
-    template<class Mutex>
-    struct shared_lock_guard
-    {
-        explicit shared_lock_guard(Mutex& mutex) noexcept
-          : _mutex(mutex)
-        {
-            _mutex.lock_shared();
-        }
-
-        shared_lock_guard(shared_lock_guard const&) = delete;
-
-        ~shared_lock_guard()
-        {
-            _mutex.unlock_shared();
-        }
-
-    private:
-
-        Mutex& _mutex;
     };
 }
 

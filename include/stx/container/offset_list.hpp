@@ -1,26 +1,26 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_OFFSET_LIST_HPP_INCLUDED
-#define STDEX_OFFSET_LIST_HPP_INCLUDED
+#ifndef STX_CONTAINER_OFFSET_LIST_HPP_INCLUDED
+#define STX_CONTAINER_OFFSET_LIST_HPP_INCLUDED
 
 #include <memory>
 #include <functional>
 #include <type_traits>
 #include <initializer_list>
 #include <boost/iterator/iterator_facade.hpp>
-#include <stdex/is_iterator.hpp>
+#include <stx/type_traits/is_iterator.hpp>
 
-namespace stdex
+namespace stx
 {
     template<class T, class Allocator = std::allocator<T>>
     class offset_list;
 }
 
-namespace stdex { namespace offset_list_detail
+namespace stx { namespace offset_list_detail
 {
     template<std::size_t Len, std::size_t Align>
     struct aligned_node
@@ -105,7 +105,7 @@ namespace stdex { namespace offset_list_detail
         template rebind_alloc<node<T>>;
 }}
 
-namespace stdex
+namespace stx
 {
     template<class T, class Allocator>
     class alignas(offset_list_detail::node<T>) offset_list

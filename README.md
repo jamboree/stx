@@ -1,7 +1,7 @@
-stdex
+stx
 =====
 
-lib for c++14 and forward
+Arbitrary collections of STL-like components.
 
 ## Dependencies
 
@@ -9,21 +9,38 @@ lib for c++14 and forward
 
 ## Components
 
-- __offset_list__: STL-like relocatable [subtraction linked list](http://en.wikipedia.org/wiki/XOR_linked_list#Subtraction_linked_list)
-- __function_ref__: non-allocating synchronous function callback
-- __enable_if_valid__: SFINAE utility
-- __is_iterator__: iterator traits
-- __is_callable__: check if callable (with an optional return type)
-- __priority__: priority-based tag-dispatching utility
-- __reconstruct__: object reconstruction utility
-- __find__: `find` and `contains` algorithms
-- __binary_search__: binary_search that returns an iterator
-- __overload__: overload callable objects
-- __task__: awaitable task based on [N4286](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4286.pdf)
+### algorithm
+- `binary_search` - binary_search that returns an iterator.
+- `apply_permutation` - reoder the elements by the specified indices.
+- `unstable_remove` - faster `remove` that does not regard the order.
+
+### container
+- `offset_list` - relocatable [subtraction linked list](http://en.wikipedia.org/wiki/XOR_linked_list#Subtraction_linked_list).
+
+### functional
+- `function_ref` - non-allocating synchronous function callback.
+- `overload` - overload callable objects.
+
+### synchronization
+- `event` -  a synchronization primitive that can be used to block the thread until the event is set.
+- `spinlock` -  a busy waiting mutex.
+
+### traits
+- `find` - find an element in a container.
+- `contains` - test whether an element is in the container.
+
+### type_traits
+- `is_iterator` - iterator traits.
+- `is_callable` - check if callable (with an optional return type).
+
+### utility
+- `enable_if_valid` - SFINAE.
+- `priority` - priority-based tag-dispatching.
+- `reconstruct` - object reconstruction.
 
 ## License
 
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)

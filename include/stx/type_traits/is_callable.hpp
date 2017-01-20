@@ -1,20 +1,20 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_IS_CALLABLE_HPP_INCLUDED
-#define STDEX_IS_CALLABLE_HPP_INCLUDED
+#ifndef STX_TYPE_TRAITS_IS_CALLABLE_HPP_INCLUDED
+#define STX_TYPE_TRAITS_IS_CALLABLE_HPP_INCLUDED
 
 #include <type_traits>
 
-namespace stdex
+namespace stx
 {
     struct dont_care;
 }
 
-namespace stdex { namespace detail
+namespace stx { namespace detail
 {
     template<class T, class U>
     struct is_resultable : std::is_convertible<T, U> {};
@@ -31,7 +31,7 @@ namespace stdex { namespace detail
     auto is_callable(float, ...) -> std::false_type;
 }}
 
-namespace stdex
+namespace stx
 {
     template<class Sig, class R = dont_care>
     struct is_callable;

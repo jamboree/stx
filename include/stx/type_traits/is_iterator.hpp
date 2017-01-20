@@ -1,17 +1,17 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_IS_ITERATOR_HPP_INCLUDED
-#define STDEX_IS_ITERATOR_HPP_INCLUDED
+#ifndef STX_TYPE_TRAITS_IS_ITERATOR_HPP_INCLUDED
+#define STX_TYPE_TRAITS_IS_ITERATOR_HPP_INCLUDED
 
 #include <iterator>
 #include <type_traits>
-#include <stdex/enable_if_valid.hpp>
+#include <stx/utility/enable_if_valid.hpp>
 
-namespace stdex { namespace detail
+namespace stx { namespace detail
 {
     template<class It>
     using iterator_category_t =
@@ -31,7 +31,7 @@ namespace stdex { namespace detail
     {};
 }}
 
-namespace stdex
+namespace stx
 {
     template<class It, class Tag = void>
     using is_iterator = detail::is_iterator_impl<It, Tag>;

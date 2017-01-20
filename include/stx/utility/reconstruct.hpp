@@ -1,17 +1,17 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_RECONSTRUCT_HPP_INCLUDED
-#define STDEX_RECONSTRUCT_HPP_INCLUDED
+#ifndef STX_UTILITY_RECONSTRUCT_HPP_INCLUDED
+#define STX_UTILITY_RECONSTRUCT_HPP_INCLUDED
 
 #include <type_traits>
 #include <initializer_list>
-#include <stdex/priority.hpp>
+#include <stx/utility/priority.hpp>
 
-namespace stdex
+namespace stx
 {
     template<class T, class... As>
     using is_nothrow_reconstructible = std::integral_constant<bool,
@@ -19,7 +19,7 @@ namespace stdex
         std::is_nothrow_destructible<T>::value>;
 }
 
-namespace stdex { namespace detail
+namespace stx { namespace detail
 {
     template<class T, class... As>
     inline std::enable_if_t<is_nothrow_reconstructible<T, As...>::value>
@@ -47,7 +47,7 @@ namespace stdex { namespace detail
     }
 }}
 
-namespace stdex
+namespace stx
 {
     template<class T, class... As>
     inline std::enable_if_t<std::is_constructible<T, As...>::value>

@@ -1,15 +1,15 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STDEX_OVERLOAD_HPP_INCLUDED
-#define STDEX_OVERLOAD_HPP_INCLUDED
+#ifndef STX_FUNCTIONAL_OVERLOAD_HPP_INCLUDED
+#define STX_FUNCTIONAL_OVERLOAD_HPP_INCLUDED
 
 #include <type_traits>
 
-namespace stdex { namespace overload_detail
+namespace stx { namespace overload_detail
 {
     template<class... F>
     struct composite
@@ -57,7 +57,7 @@ namespace stdex { namespace overload_detail
     };
 }}
 
-namespace stdex
+namespace stx
 {
     template<class... F>
     inline overload_detail::composite<std::remove_reference_t<F>...>
