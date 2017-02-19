@@ -21,7 +21,7 @@ Arbitrary collections of STL-like components.
 - `function_ref` - non-allocating synchronous function callback.
 - `overload` - overload callable objects.
 
-### synchronization
+### sync
 - `event` -  a synchronization primitive that can be used to block the thread until the event is set.
 - `spinlock` -  a busy waiting mutex.
 
