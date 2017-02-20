@@ -1,8 +1,8 @@
 /*//////////////////////////////////////////////////////////////////////////////
-Copyright (c) 2017 Jamboree
+    Copyright (c) 2017 Jamboree
 
-Distributed under the Boost Software License, Version 1.0. (See accompanying
-file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+    Distributed under the Boost Software License, Version 1.0. (See accompanying
+    file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
 #ifndef STX_ALGORITHM_APPLY_PERMUTATION_HPP_INCLUDED
 #define STX_ALGORITHM_APPLY_PERMUTATION_HPP_INCLUDED
