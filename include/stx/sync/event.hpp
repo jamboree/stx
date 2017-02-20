@@ -4,8 +4,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////*/
-#ifndef STX_SYNCHRONIZATION_EVENT_HPP_INCLUDED
-#define STX_SYNCHRONIZATION_EVENT_HPP_INCLUDED
+#ifndef STX_SYNC_EVENT_HPP_INCLUDED
+#define STX_SYNC_EVENT_HPP_INCLUDED
 
 #include <mutex>
 #include <condition_variable>
