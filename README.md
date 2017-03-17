@@ -30,13 +30,14 @@ Arbitrary collections of STL-like components.
 - `contains` - test whether an element is in the container.
 
 ### type_traits
+- `enable_if_valid` - SFINAE on expression.
 - `is_iterator` - iterator traits.
 - `is_callable` - check if callable (with an optional return type).
 
 ### utility
-- `enable_if_valid` - SFINAE.
 - `priority` - priority-based tag-dispatching.
 - `reconstruct` - object reconstruction.
+- `flag_set` - a type-safe flag-set
 
 ## License
 

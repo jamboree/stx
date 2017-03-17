@@ -9,7 +9,7 @@
 
 #include <iterator>
 #include <type_traits>
-#include <stx/utility/enable_if_valid.hpp>
+#include <stx/type_traits/enable_if_valid.hpp>
 
 namespace stx { namespace detail
 {
