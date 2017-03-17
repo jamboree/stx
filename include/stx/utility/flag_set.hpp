@@ -9,20 +9,9 @@
 
 #include <type_traits>
 #include <boost/config.hpp>
-#include <stx/type_traits/enable_if_valid.hpp>
 
 namespace stx
 {
-    namespace detail
-    {
-        template<class Enum, std::enable_if_t<std::is_enum<Enum>::value, bool> = true>
-        auto get_flag_test(Enum val) -> enable_if_valid_t<decltype(get_flag(val)), std::true_type>;
-        std::false_type get_flag_test(...);
-    }
-
-    template<class Enum>
-    struct is_flag : decltype(detail::get_flag_test(std::declval<Enum>())) {};
-
     template<class Enum>
     struct flag_set
     {
@@ -30,7 +19,7 @@ namespace stx
 
         constexpr flag_set() : _flags() {}
 
-        constexpr flag_set(Enum val) : _flags(get_flag(val)) {}
+        constexpr flag_set(Enum val) : _flags(static_cast<value_type>(val)) {}
 
         explicit constexpr flag_set(value_type val) : _flags(val) {}
 
@@ -96,12 +85,6 @@ namespace stx
     private:
         value_type _flags;
     };
-}
-
-template<class Enum, std::enable_if_t<stx::is_flag<Enum>::value, bool> = true>
-constexpr stx::flag_set<Enum> operator|(Enum lhs, Enum rhs)
-{
-    return stx::flag_set<Enum>(lhs) | rhs;
 }
 
 #endif
