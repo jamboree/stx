@@ -102,12 +102,23 @@ namespace stx
 
         constexpr bool empty() const
         {
-            return !!_n;
+            return !_n;
         }
 
         constexpr size_type size() const
         {
             return _n;
+        }
+
+        constexpr void pop_front()
+        {
+            ++_data;
+            --_n;
+        }
+
+        constexpr void pop_back()
+        {
+            --_n;
         }
 
     private:
