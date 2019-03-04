@@ -125,6 +125,12 @@ namespace stx
         T* _data;
         std::size_t _n;
     };
+
+    template<class T>
+    constexpr array_view<T> make_array_view(T* data, std::size_t size)
+    {
+        return {data, size};
+    }
 }
 
 #endif
